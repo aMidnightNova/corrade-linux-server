@@ -1,0 +1,17 @@
+[Unit]
+Description=Corrade Bot
+
+[Service]
+ExecStart=mono /opt/hifi/live/corrade.exe
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=corrade
+User=corrade
+Group=corrade
+Environment=PATH=/usr/bin/:/usr/local/bin/
+WorkingDirectory=/opt/corrade/live
+
+[Install]
+WantedBy=multi-user.target
