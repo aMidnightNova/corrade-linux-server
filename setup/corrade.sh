@@ -1,6 +1,25 @@
 #!/usr/bin/env bash
 BASE_DIR="/opt/corrade"
 
+
+
+function getStatus() {
+    systemctl status corrade.service
+}
+
+function startCorrade() {
+    systemctl start corrade.service
+}
+
+function stopCorrade() {
+    systemctl stop corrade.service
+}
+
+function restartCorrade() {
+    systemctl restart corrade.service
+}
+
+
 function doContinue() {
 ANS=""
 
@@ -38,7 +57,7 @@ function doSave() {
             tar -zcf ${BASE_DIR}/backups/CORRADE.tar.gz -C ${BASE_DIR}/live .
     fi
 
-    echo "saved IN $BASE_DIR/backups/CORRADE_$STAMP.tar.gz ON `date`"
+    echo "saved IN $BASE_DIR/backups/CORRADE_BACKUP_$STAMP.tar.gz ON `date`"
 }
 
 function doUpdate() {
@@ -69,13 +88,19 @@ function doUpdate() {
 
             cp -R ${BASE_DIR}/temp/* ${BASE_DIR}/live
             startCorrade
+            sleep 2
+            getStatus
 
         else
             exit
     fi
 }
 
-
+function trimBackups() {
+    cd $HIFIBASEDIR/backups/configs
+    ls -tr | head -n -10 | xargs -l -r sh -c 'echo Deleting $1 ON `date` && rm $1' --
+    cd -
+}
 
 
 function doRestore() {
@@ -108,22 +133,11 @@ function getHelp() {
     echo " --update    : Update Corrade."
 }
 
+function doCron() {
+cerbot renew
 
-function getStatus() {
-    systemctl status corrade.service
 }
 
-function startCorrade() {
-    systemctl start corrade.service
-}
-
-function stopCorrade() {
-    systemctl stop corrade.service
-}
-
-function restartCorrade() {
-    systemctl restart corrade.service
-}
 
 
 
@@ -139,6 +153,9 @@ fi
 case $1 in
     --help)
         getHelp
+        ;;
+    --cron)#not listed in help
+        doCron
         ;;
     --status)
         getStatus

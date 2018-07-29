@@ -11,7 +11,7 @@ This will launch corrade in a production mode.
 ```
 
 
-bash <(curl -Ls https://raw.githubusercontent.com/MidnightRift/corrade-linux-server/master/setup.sh) URL_OR_FILE_PATH_TO_CORRADE_ZIP (optional)FILE_PATH_TO_XML_CONF
+bash <(curl -Ls https://raw.githubusercontent.com/MidnightRift/corrade-linux-server/master/setup.sh) FILE_PATH_OR_URL_TO_CORRADE_ZIP (optional)FILE_PATH_TO_XML_CONF (optional)CERT_BOT_EMAIL
 ```
 
 # Usage 

@@ -2,7 +2,7 @@
 Description=Corrade Bot
 
 [Service]
-ExecStart=mono /opt/hifi/live/corrade.exe
+ExecStart=mono /opt/corrade/live/corrade.exe
 Restart=always
 RestartSec=10
 StandardOutput=syslog
