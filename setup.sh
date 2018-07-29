@@ -84,7 +84,9 @@ installCorrade(){
         then
             yes | cp -f ${PATH_TO_CONFIG_XML} ${BASE_DIR}/live
             xmlstarlet ed -L -d "Configuration/Servers/TCPserver/Certificate/Password" ${BASE_DIR}/live/Confinguration.xml
-            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/Certificate/Path" ${BASE_DIR}/live/Confinguration.xml
+            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/Certificate/Protocol" ${BASE_DIR}/live/Confinguration.xml
+
+            xmlstarlet ed -L "Configuration/Servers/TCPserver/Certificate/Path" -v "$BASE_DIR/cert/corrade_cert.pfx" ${BASE_DIR}/live/Confinguration.xml
             systemctl enable corrade.service
             systemctl start corrade.service
         else

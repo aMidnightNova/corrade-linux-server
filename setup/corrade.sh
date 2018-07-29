@@ -23,16 +23,16 @@ function restartCorrade() {
 function doContinue() {
 ANS=""
 
-while [[ ! $ANS =~ ^([yY][eE][sS]|[yY])$ ]]
+while [[ ! ${ANS} =~ ^([yY][eE][sS]|[yY])$ ]]
     do
-        if [[ $ANS =~ ^([nN][oO]|[nN])$ ]]
+        if [[ ${ANS} =~ ^([nN][oO]|[nN])$ ]]
             then
                 return 1
             else
                 read -p "Continue y/n? " ANS
         fi
 
-        if [[ $ANS =~ ^([yY][eE][sS]|[yY])$ ]]
+        if [[ ${ANS} =~ ^([yY][eE][sS]|[yY])$ ]]
             then
                 return 0
         fi
@@ -52,9 +52,9 @@ function doSave() {
 
     if [ "$1" == "verbose" ]
         then
-            tar -zcvf ${BASE_DIR}/backups/CORRADE.tar.gz -C ${BASE_DIR}/live .
+            tar -zcvf ${BASE_DIR}/backups/CORRADE_BACKUP_${STAMP}.tar.gz -C ${BASE_DIR}/live .
         else
-            tar -zcf ${BASE_DIR}/backups/CORRADE.tar.gz -C ${BASE_DIR}/live .
+            tar -zcf ${BASE_DIR}/backups/CORRADE_BACKUP_${STAMP}.tar.gz -C ${BASE_DIR}/live .
     fi
 
     echo "saved IN $BASE_DIR/backups/CORRADE_BACKUP_$STAMP.tar.gz ON `date`"
@@ -82,12 +82,18 @@ function doUpdate() {
             fi
 
             doSave verbose
+            CURRENT_CONFIG_XML=$(<${BASE_DIR}/live/Configuration.xml)
 
             stopCorrade
             rm -rf ${BASE_DIR}/live/*
 
             cp -R ${BASE_DIR}/temp/* ${BASE_DIR}/live
+
+            ${CURRENT_CONFIG_XML} > ${BASE_DIR}/live/Configuration.xml
+
             startCorrade
+
+            rm -rf ${BASE_DIR}/temp/*
             sleep 2
             getStatus
 
@@ -97,7 +103,7 @@ function doUpdate() {
 }
 
 function trimBackups() {
-    cd $HIFIBASEDIR/backups/configs
+    cd ${BASE_DIR}/backups
     ls -tr | head -n -10 | xargs -l -r sh -c 'echo Deleting $1 ON `date` && rm $1' --
     cd -
 }
@@ -134,8 +140,7 @@ function getHelp() {
 }
 
 function doCron() {
-cerbot renew
-
+    cerbot renew
 }
 
 
