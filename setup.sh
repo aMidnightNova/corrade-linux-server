@@ -39,12 +39,74 @@ while [[ ! ${ANS} =~ ^([yY][eE][sS]|[yY])$ ]]
 }
 
 
-function setPerms()  {
-  if [ -d "$BASE_DIR/live" ]; then
-    chown -R corrade:corrade ${BASE_DIR}/live
-  fi
+
+
+
+
+
+
+
+
+function installMono() {
+    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+    su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
+    yum install -y mono-complete
 }
 
+function setupFirewalld() {
+    systemctl enable firewalld.service
+    systemctl start firewalld.service
+
+    firewall-cmd --permanent --zone=public --add-service=https
+    firewall-cmd --permanent --zone=public --add-service=http
+    firewall-cmd --permanent --zone=public --add-port=9000/tcp #tcp
+    firewall-cmd --permanent --zone=public --add-port=9005/tcp #mqtt
+    systemctl restart firewalld.service
+}
+
+function installCorradeLinuxServer() {
+    mkdir -p ${BASE_DIR}/corrade-linux-server
+
+    git clone -b master --single-branch https://github.com/MidnightRift/corrade-linux-server.git ${BASE_DIR}/corrade-linux-server
+
+    cp ${BASE_DIR}/corrade-linux-server/setup/corrade.service /etc/systemd/system/corrade.service
+    cp ${BASE_DIR}/corrade-linux-server/setup/corrade /usr/local/bin/corrade
+
+    chmod 755 /usr/local/bin/corrade
+
+
+}
+
+function setupNginx() {
+    yes | cp -f ${BASE_DIR}/corrade-linux-server/setup/nginx.conf /etc/nginx/nginx.conf
+    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_http_proxy.conf /etc/nginx/conf.d/corrade_http_proxy.conf
+    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_mqtt_proxy.conf /etc/nginx/conf.d/corrade_mqtt_proxy.conf
+    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_tcp_proxy.conf /etc/nginx/conf.d/corrade_tcp_proxy.conf
+
+    RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
+
+    htpasswd -c -b /etc/nginx/.htpasswd corrade ${RANDOM_PASSWORD}
+    echo "Basic Auth"
+    echo "User: corrade"
+    echo "Password: $RANDOM_PASSWORD"
+
+    systemctl enable nginx.service
+    systemctl start nginx.service
+}
+
+function setupLetsEncrypt() {
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+    certbot certonly --standalone --email ${CERT_BOT_EMAIL} --agree-tos -d $HOSTNAME
+    crontab -l | { cat; echo "$((RANDOM %59+1)) 4 * * 1 /usr/local/bin/corrade --cron >> $BASE_DIR/logs/cron.log"; } | crontab -
+}
+
+function createCerts() {
+    openssl genrsa -out ${BASE_DIR}/cert/corrade_private_key.pem 2048
+    openssl req -new -key ${BASE_DIR}/cert/corrade_private_key.pem -subj "/CN=$HOSTNAME" -out ${BASE_DIR}/cert/corrade_csr.csr
+    openssl x509 -signkey ${BASE_DIR}/cert/corrade_private_key.pem -in ${BASE_DIR}/cert/corrade_csr.csr -req -days 3650 -out ${BASE_DIR}/cert/corrade_cert.pem
+    openssl pkcs12 -export -passout pass: -in ${BASE_DIR}/cert/corrade_cert.pem -inkey ${BASE_DIR}/cert/corrade_private_key.pem -out ${BASE_DIR}/cert/corrade_pfx_cert.pfx
+    openssl rsa -in ${BASE_DIR}/cert/corrade_private_key.pem -outform PVK -pvk-none -out ${BASE_DIR}/cert/corrade_pvk_cert.pvk
+}
 
 installCorrade(){
     id -u corrade &>/dev/null || useradd corrade
@@ -58,10 +120,6 @@ installCorrade(){
     mkdir -p ${BASE_DIR}/cert
 
     #RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
-    PRIVATE_KEY=$(openssl genrsa 2048)
-    CERTIFICATE_SIGNING_REQUEST=$(openssl req -new -key <(cat <<< "$PRIVATE_KEY") -subj "/CN=$HOSTNAME")
-    CERTIFICATE=$(openssl x509 -signkey <(cat <<< "$PRIVATE_KEY") -in <(cat <<< "$CERTIFICATE_SIGNING_REQUEST") -req -days 3650)
-    openssl pkcs12 -export -passout pass: -in <(cat <<< "$CERTIFICATE") -inkey <(cat <<< "$PRIVATE_KEY") -out ${BASE_DIR}/cert/corrade_cert.pfx
 
 
 #extract to temp
@@ -79,14 +137,23 @@ installCorrade(){
     cp -R ${BASE_DIR}/temp/* ${BASE_DIR}/live
     rm -rf ${BASE_DIR}/temp/*
 
+    #tell mono to use a cert on the 8080 port
+    httpcfg -add -port 8080 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem
 
     if [ PATH_TO_CONFIG_XML != "" ];
         then
             yes | cp -f ${PATH_TO_CONFIG_XML} ${BASE_DIR}/live
-            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/Certificate/Password" ${BASE_DIR}/live/Confinguration.xml
-            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/Certificate/Protocol" ${BASE_DIR}/live/Confinguration.xml
+            #remove password and protocol fields
+            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/TCPCertificate/Password" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/TCPCertificate/Protocol" ${BASE_DIR}/live/Configuration.xml
 
-            xmlstarlet ed -L "Configuration/Servers/TCPserver/Certificate/Path" -v "$BASE_DIR/cert/corrade_cert.pfx" ${BASE_DIR}/live/Confinguration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/TCPserver/TCPCertificate/Path" -v "$BASE_DIR/cert/corrade_pfx_cert.pfx" ${BASE_DIR}/live/Configuration.xml
+
+            xmlstarlet ed -L -u "Configuration/Servers/MQTTServer/MQTTCertificate/Path" -v "$BASE_DIR/cert/corrade_pfx_cert.pfx" ${BASE_DIR}/live/Configuration.xml
+
+            xmlstarlet ed -L -u "Configuration/Servers/HTTPServer/Prefixes/Prefix" -v "https://+:8080/" ${BASE_DIR}/live/Configuration.xml
+
+
             systemctl enable corrade.service
             systemctl start corrade.service
         else
@@ -101,61 +168,19 @@ installCorrade(){
 
 }
 
-function installCorradeLinuxServer() {
-    mkdir -p ${BASE_DIR}/corrade-linux-server
-
-    git clone -b master --single-branch https://github.com/MidnightRift/corrade-linux-server.git ${BASE_DIR}/corrade-linux-server
-
-    cp ${BASE_DIR}/corrade-linux-server/setup/corrade.service /etc/systemd/system/corrade.service
-    cp ${BASE_DIR}/corrade-linux-server/setup/corrade /usr/local/bin/corrade
-
-    chmod 755 /usr/local/bin/corrade
-
-
-}
-
-function setupFirewalld() {
-
-    systemctl enable firewalld.service
-    systemctl start firewalld.service
-
-    firewall-cmd --permanent --zone=public --add-service=https
-    firewall-cmd --permanent --zone=public --add-service=http
-    firewall-cmd --permanent --zone=public --add-port=8095/tcp
-
-    systemctl restart firewalld.service
-
+function setPerms()  {
+  if [ -d "$BASE_DIR/live" ]; then
+    chown -R corrade:corrade ${BASE_DIR}/live
+  fi
 }
 
 
-
-
-function setupNginx() {
-    yes | cp -f ${BASE_DIR}/corrade-linux-server/setup/nginx.conf /etc/nginx/nginx.conf
-    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_http_proxy.conf /etc/nginx/conf.d/corrade_http_proxy.conf
-    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_tcp_proxy.conf /etc/nginx/conf.d/corrade_tcp_proxy.conf
-
-    systemctl enable nginx.service
-    systemctl start nginx.service
-}
-
-function setupLetsEncrypt() {
-    openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
-    certbot certonly --standalone --email ${CERT_BOT_EMAIL} --agree-tos -d $HOSTNAME
-    crontab -l | { cat; echo "$((RANDOM %59+1)) 4 * * 1 /usr/local/bin/corrade --cron >> $BASE_DIR/logs/cron.log"; } | crontab -
-}
-
-function installMono() {
-    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
-    su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
-    yum install -y mono-complete
-}
 
 ###
 
 yum update -y
 yum install -y epel-release
-yum install -y --enablerepo=epel git openssl openssl-devel nginx firewalld unzip certbot xmlstarlet
+yum install -y --enablerepo=epel git openssl openssl-devel nginx firewalld unzip certbot xmlstarlet httpd-tools
 
 
 
@@ -170,6 +195,8 @@ installCorradeLinuxServer
 setupNginx
 
 setupLetsEncrypt
+
+createCerts
 
 installCorrade
 

@@ -89,7 +89,7 @@ function doUpdate() {
 
             cp -R ${BASE_DIR}/temp/* ${BASE_DIR}/live
 
-            ${CURRENT_CONFIG_XML} > ${BASE_DIR}/live/Configuration.xml
+            yes | cp -f ${CURRENT_CONFIG_XML} > ${BASE_DIR}/live/Configuration.xml
 
             startCorrade
 
