@@ -100,6 +100,14 @@ function setupLetsEncrypt() {
     crontab -l | { cat; echo "$((RANDOM %59+1)) 4 * * 1 /usr/local/bin/corrade --cron >> $BASE_DIR/logs/cron.log"; } | crontab -
 }
 
+function createDirectorStructure() {
+    mkdir -p ${BASE_DIR}/live
+    mkdir -p ${BASE_DIR}/logs
+    mkdir -p ${BASE_DIR}/backups
+    mkdir -p ${BASE_DIR}/temp
+    mkdir -p ${BASE_DIR}/cert
+}
+
 function createCerts() {
     openssl genrsa -out ${BASE_DIR}/cert/corrade_private_key.pem 2048
     openssl req -new -key ${BASE_DIR}/cert/corrade_private_key.pem -subj "/CN=$HOSTNAME" -out ${BASE_DIR}/cert/corrade_csr.csr
@@ -117,7 +125,6 @@ installCorrade(){
     mkdir -p ${BASE_DIR}/logs
     mkdir -p ${BASE_DIR}/backups
     mkdir -p ${BASE_DIR}/temp
-    mkdir -p ${BASE_DIR}/cert
 
     #RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
 
@@ -128,7 +135,7 @@ installCorrade(){
             unzip ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} -d ${BASE_DIR}/temp
     elif [[ ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} =~ https?://* ]]
         then
-            unzip <(curl -Ls ${FILE_PATH_OR_URL_TO_CORRADE_ZIP}) -d ${BASE_DIR}/temp
+            curl -Ls ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} | bsdtar -xf - -C ${BASE_DIR}/temp
     else
         echo "Corrade source is not valid."
     fi
@@ -195,6 +202,8 @@ installCorradeLinuxServer
 setupNginx
 
 setupLetsEncrypt
+
+createDirectorStructure
 
 createCerts
 
