@@ -1,8 +1,10 @@
 [Unit]
 Description=Corrade Bot
+After=network.target
 
 [Service]
-ExecStart=mono /opt/corrade/live/corrade.exe
+ExecStartPre=-rm -f /opt/corrade/live/Corrade.exe.lock
+ExecStart=/usr/bin/mono-service -d:/opt/corrade/live/ -l:/opt/corrade/live/Corrade.exe.lock /opt/corrade/live/Corrade.exe
 Restart=always
 RestartSec=10
 StandardOutput=syslog
