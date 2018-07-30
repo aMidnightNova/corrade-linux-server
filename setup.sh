@@ -126,7 +126,7 @@ installCorrade(){
     if [[ -f ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} ]]
         then
             unzip ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} -d ${BASE_DIR}/temp
-    elif [[ -d ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} ]]
+    elif [[ ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} =~ https?://* ]]
         then
             unzip <(curl -Ls ${FILE_PATH_OR_URL_TO_CORRADE_ZIP}) -d ${BASE_DIR}/temp
     else
