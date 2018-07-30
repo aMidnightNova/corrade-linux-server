@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+BASE_DIR="/opt/corrade"
+
+source ${BASE_DIR}/corrade-linux-server/setup/nginx.conf
+
 if [ "$1" != "" ];
     then
         FILE_PATH_OR_URL_TO_CORRADE_ZIP="$1"
@@ -17,7 +21,7 @@ if [ "$3" != "" ];
         CERT_BOT_EMAIL=root@$HOSTNAME
 fi
 
-BASE_DIR="/opt/corrade"
+
 
 function doContinue() {
 ANS=""
@@ -78,10 +82,10 @@ function installCorradeLinuxServer() {
 }
 
 function setupNginx() {
-    yes | cp -f ${BASE_DIR}/corrade-linux-server/setup/nginx.conf /etc/nginx/nginx.conf
-    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_http_proxy.conf /etc/nginx/conf.d/corrade_http_proxy.conf
-    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_mqtt_proxy.conf /etc/nginx/conf.d/corrade_mqtt_proxy.conf
-    cp ${BASE_DIR}/corrade-linux-server/setup/corrade_tcp_proxy.conf /etc/nginx/conf.d/corrade_tcp_proxy.conf
+    echo "${NGINX_CONF}" > /etc/nginx/nginx.conf
+    echo "${CORRADE_HTTP_PROXY}" > /etc/nginx/conf.d/corrade_http_proxy.conf
+    echo "${CORRADE_MQTT_PROXY}" > /etc/nginx/conf.d/corrade_mqtt_proxy.conf
+    echo "${CORRADE_TCP_PROXY}" > /etc/nginx/conf.d/corrade_tcp_proxy.conf
 
     RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
 
