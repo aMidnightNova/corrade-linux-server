@@ -2,7 +2,10 @@
 
 BASE_DIR="/opt/corrade"
 
-source ${BASE_DIR}/corrade-linux-server/setup/nginx.conf
+NGINX_CONF=$(<${BASE_DIR}/corrade-linux-server/setup/nginx.conf)
+
+BASIC_AUTH_USER="corrade"
+RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 24 ; echo '')
 
 if [ "$1" != "" ];
     then
@@ -43,13 +46,7 @@ while [[ ! ${ANS} =~ ^([yY][eE][sS]|[yY])$ ]]
 }
 
 
-
-
-
-
-
-
-
+####
 
 function installMono() {
     rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
@@ -83,16 +80,10 @@ function installCorradeLinuxServer() {
 
 function setupNginx() {
     echo "${NGINX_CONF}" > /etc/nginx/nginx.conf
-    echo "${CORRADE_HTTP_PROXY}" > /etc/nginx/conf.d/corrade_http_proxy.conf
-    echo "${CORRADE_MQTT_PROXY}" > /etc/nginx/conf.d/corrade_mqtt_proxy.conf
-    echo "${CORRADE_TCP_PROXY}" > /etc/nginx/conf.d/corrade_tcp_proxy.conf
 
-    RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
 
-    htpasswd -c -b /etc/nginx/.htpasswd corrade ${RANDOM_PASSWORD}
-    echo "Basic Auth"
-    echo "User: corrade"
-    echo "Password: $RANDOM_PASSWORD"
+
+    htpasswd -c -b /etc/nginx/.htpasswd ${BASIC_AUTH_USER} ${RANDOM_PASSWORD}
 
     systemctl enable nginx.service
     systemctl start nginx.service
@@ -104,7 +95,7 @@ function setupLetsEncrypt() {
     crontab -l | { cat; echo "$((RANDOM %59+1)) 4 * * 1 /usr/local/bin/corrade --cron >> $BASE_DIR/logs/cron.log"; } | crontab -
 }
 
-function createDirectorStructure() {
+function createDirectoryStructure() {
     mkdir -p ${BASE_DIR}/live
     mkdir -p ${BASE_DIR}/logs
     mkdir -p ${BASE_DIR}/backups
@@ -130,8 +121,9 @@ installCorrade(){
     mkdir -p ${BASE_DIR}/backups
     mkdir -p ${BASE_DIR}/temp
 
-    #RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
-
+    #incase I need to add ports to selinux
+    #semanage port -a -t http_port_t -p tcp 9000
+    #semanage port -a -t http_port_t -p tcp 9005
 
 #extract to temp
     if [[ -f ${FILE_PATH_OR_URL_TO_CORRADE_ZIP} ]]
@@ -149,8 +141,7 @@ installCorrade(){
     rm -rf ${BASE_DIR}/temp/*
 
     #tell mono to use a cert on the 8080 port
-    httpcfg -add -port 8080 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem
-
+    su -c "httpcfg -add -port 8080 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
     if [ PATH_TO_CONFIG_XML != "" ];
         then
             yes | cp -f ${PATH_TO_CONFIG_XML} ${BASE_DIR}/live
@@ -158,11 +149,12 @@ installCorrade(){
             xmlstarlet ed -L -d "Configuration/Servers/TCPserver/TCPCertificate/Password" ${BASE_DIR}/live/Configuration.xml
             xmlstarlet ed -L -d "Configuration/Servers/TCPserver/TCPCertificate/Protocol" ${BASE_DIR}/live/Configuration.xml
 
-            xmlstarlet ed -L -u "Configuration/Servers/TCPserver/TCPCertificate/Path" -v "$BASE_DIR/cert/corrade_pfx_cert.pfx" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/TCPserver/TCPCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
-            xmlstarlet ed -L -u "Configuration/Servers/MQTTServer/MQTTCertificate/Path" -v "$BASE_DIR/cert/corrade_pfx_cert.pfx" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/MQTTServer/MQTTCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
-            xmlstarlet ed -L -u "Configuration/Servers/HTTPServer/Prefixes/Prefix" -v "https://+:8080/" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/HTTPServer/Prefixes/Prefix" -v "https://+:8008/" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/Nucleus/Prefixes/Prefix" -v "https://+:8009/" ${BASE_DIR}/live/Configuration.xml
 
 
             systemctl enable corrade.service
@@ -183,6 +175,18 @@ function setPerms()  {
   if [ -d "$BASE_DIR/live" ]; then
     chown -R corrade:corrade ${BASE_DIR}/live
   fi
+}
+
+function printInfoToCMD() {
+    echo "################"
+    echo "################"
+    echo " "
+    echo "HTTP and Nucleus"
+    echo " User: ${BASIC_AUTH_USER}"
+    echo " Pass: ${RANDOM_PASSWORD}"
+    echo " "
+    echo "HTTP: https://${HOSTNAME}/api"
+    echo "Nucleus: https://${HOSTNAME}/nucleus"
 }
 
 
@@ -207,10 +211,12 @@ setupNginx
 
 setupLetsEncrypt
 
-createDirectorStructure
+createDirectoryStructure
 
 createCerts
 
 installCorrade
 
 setPerms
+
+printInfoToCMD

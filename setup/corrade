@@ -57,7 +57,7 @@ function doSave() {
             tar -zcf ${BASE_DIR}/backups/CORRADE_BACKUP_${STAMP}.tar.gz -C ${BASE_DIR}/live .
     fi
 
-    echo "saved IN $BASE_DIR/backups/CORRADE_BACKUP_$STAMP.tar.gz ON `date`"
+    echo "saved IN ${BASE_DIR}/backups/CORRADE_BACKUP_${STAMP}.tar.gz ON `date`"
 }
 
 function doUpdate() {
@@ -74,9 +74,9 @@ function doUpdate() {
             if [[ -f ${CHOSEN_FILE} ]]
                 then
                     unzip ${CHOSEN_FILE} -d ${BASE_DIR}/temp
-            elif [[ -d ${CHOSEN_FILE} ]]
+            elif [[ ${CHOSEN_FILE} =~ https?://* ]]
                 then
-                    unzip <(curl -Ls ${CHOSEN_FILE}) -d ${BASE_DIR}/temp
+                    curl -Ls ${CHOSEN_FILE} | bsdtar -xf - -C ${BASE_DIR}/temp
             else
                 echo "Corrade source is not valid."
             fi
@@ -134,7 +134,7 @@ function getHelp() {
     echo " --stop      : Stops Corrade."
     echo " --start     : Starts Corrade."
     echo " --restart   : Restarts Corrade."
-    echo " --status    : Restarts Corrade."
+    echo " --status    : Shows Corrade status."
     echo " --restore   : Restore previous installed version of Corrade."
     echo " --update    : Update Corrade."
 }
