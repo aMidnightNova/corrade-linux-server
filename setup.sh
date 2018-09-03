@@ -2,7 +2,7 @@
 
 BASE_DIR="/opt/corrade"
 
-NGINX_CONF=$(<${BASE_DIR}/corrade-linux-server/setup/nginx.conf)
+NGINX_CONF=$(eval echo "\"$(<${BASE_DIR}/corrade-linux-server/setup/nginx.conf)\"")
 
 BASIC_AUTH_USER="corrade"
 RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 24 ; echo '')
