@@ -91,6 +91,7 @@ function doUpdate() {
 
             echo "${CURRENT_CONFIG_XML}" > ${BASE_DIR}/live/Configuration.xml
 
+            setPerms
             startCorrade
 
             rm -rf ${BASE_DIR}/temp/*

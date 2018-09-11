@@ -2,8 +2,6 @@
 
 BASE_DIR="/opt/corrade"
 
-NGINX_CONF=$(eval echo "\"$(<${BASE_DIR}/corrade-linux-server/setup/nginx.conf)\"")
-
 BASIC_AUTH_USER="corrade"
 RANDOM_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 24 ; echo '')
 
@@ -79,6 +77,7 @@ function installCorradeLinuxServer() {
 }
 
 function setupNginx() {
+    NGINX_CONF=$(eval echo "\"$(<${BASE_DIR}/corrade-linux-server/setup/nginx.conf)\"")
     echo "${NGINX_CONF}" > /etc/nginx/nginx.conf
 
 
@@ -141,15 +140,16 @@ installCorrade(){
     rm -rf ${BASE_DIR}/temp/*
 
     #tell mono to use a cert on the 8080 port
-    su -c "httpcfg -add -port 8080 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+    su -c "httpcfg -add -port 8008 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+    su -c "httpcfg -add -port 8009 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
     if [ PATH_TO_CONFIG_XML != "" ];
         then
             yes | cp -f ${PATH_TO_CONFIG_XML} ${BASE_DIR}/live
             #remove password and protocol fields
-            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/TCPCertificate/Password" ${BASE_DIR}/live/Configuration.xml
-            xmlstarlet ed -L -d "Configuration/Servers/TCPserver/TCPCertificate/Protocol" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Password" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Protocol" ${BASE_DIR}/live/Configuration.xml
 
-            xmlstarlet ed -L -u "Configuration/Servers/TCPserver/TCPCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
             xmlstarlet ed -L -u "Configuration/Servers/MQTTServer/MQTTCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
@@ -178,6 +178,7 @@ function setPerms()  {
 }
 
 function printInfoToCMD() {
+    echo " "
     echo "################"
     echo "################"
     echo " "
