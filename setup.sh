@@ -90,7 +90,7 @@ function setupNginx() {
 
 function setupLetsEncrypt() {
     openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
-    certbot certonly --non-interactive --staging --standalone --email ${CERT_BOT_EMAIL} --agree-tos -d $HOSTNAME
+    certbot certonly --non-interactive --standalone --email ${CERT_BOT_EMAIL} --agree-tos -d $HOSTNAME
     crontab -l | { cat; echo "$((RANDOM %59+1)) 4 * * 1 /usr/local/bin/corrade --cron >> $BASE_DIR/logs/cron.log"; } | crontab -
 }
 
@@ -221,3 +221,7 @@ installCorrade
 setPerms
 
 printInfoToCMD
+
+# disable kernel protection to increase mono performance.
+
+grubby --update-kernel=ALL --args="nopti noibrs noibpb nospectre_v2 nospec_store_bypass_disable"
