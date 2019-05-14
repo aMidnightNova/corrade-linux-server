@@ -171,7 +171,7 @@ installCorrade(){
             xmlstarlet ed -L -u "Configuration/Servers/MQTTServer/MQTTCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
             xmlstarlet ed -L -u "Configuration/Servers/HTTPServer/Prefixes/Prefix" -v "https://+:8008/" ${BASE_DIR}/live/Configuration.xml
-            xmlstarlet ed -L -u "Configuration/Servers/Nucleus/Prefixes/Prefix" -v "https://+:8009/" ${BASE_DIR}/live/Configuration.xml
+            #xmlstarlet ed -L -u "Configuration/Servers/Nucleus/Prefixes/Prefix" -v "https://+:8009/" ${BASE_DIR}/live/Configuration.xml
 
 
             systemctl enable corrade.service
@@ -225,9 +225,9 @@ setupFirewalld
 
 installCorradeLinuxServer
 
-setupNginx
-
 setupLetsEncrypt
+
+setupNginx
 
 createDirectoryStructure
 
