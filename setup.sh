@@ -51,13 +51,15 @@ function installMono() {
 # so lets use the platform default then update it at the very end to latest
 #    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
 #    su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
-    yum install -y mono-complete
+    yum install -y mono-core
 }
 function installMono2ndTimeForBugWorkAround() {
 # there is a bug with the security certificate installs with 5.20.1 Stable (5.20.1.19) https://github.com/mono/mono/issues/14152
 # so lets use the platform default then update it at the very end to latest
     rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
     su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
+
+    # replace mono-core with mono-compete and the above when this work around is no longer needed.
     yum install -y mono-complete
 }
 
