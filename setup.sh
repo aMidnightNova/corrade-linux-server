@@ -47,6 +47,15 @@ while [[ ! ${ANS} =~ ^([yY][eE][sS]|[yY])$ ]]
 ####
 
 function installMono() {
+# there is a bug with the security certificate installs with 5.20.1 Stable (5.20.1.19) https://github.com/mono/mono/issues/14152
+# so lets use the platform default then update it at the very end to latest
+#    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+#    su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
+    yum install -y mono-complete
+}
+function installMono2ndTimeForBugWorkAround() {
+# there is a bug with the security certificate installs with 5.20.1 Stable (5.20.1.19) https://github.com/mono/mono/issues/14152
+# so lets use the platform default then update it at the very end to latest
     rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
     su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
     yum install -y mono-complete
@@ -110,10 +119,20 @@ function createCerts() {
     openssl rsa -in ${BASE_DIR}/cert/corrade_private_key.pem -outform PVK -pvk-none -out ${BASE_DIR}/cert/corrade_pvk_cert.pvk
 }
 
-installCorrade(){
+function setupMonoCertificatePorts() {
+    #tell mono to use a cert on ports:
+    su -c "httpcfg -add -port 8008 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+    su -c "httpcfg -add -port 8009 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+    #JIC its needed later
+    su -c "httpcfg -add -port 8443 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+}
+
+function createCorradeUserIfNotExist() {
     id -u corrade &>/dev/null || useradd corrade
     id -g corrade &>/dev/null || groupadd corrade
+}
 
+installCorrade(){
 
     mkdir -p ${BASE_DIR}/live
     mkdir -p ${BASE_DIR}/logs
@@ -139,9 +158,7 @@ installCorrade(){
     cp -R ${BASE_DIR}/temp/* ${BASE_DIR}/live
     rm -rf ${BASE_DIR}/temp/*
 
-    #tell mono to use a cert on the 8080 port
-    su -c "httpcfg -add -port 8008 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
-    su -c "httpcfg -add -port 8009 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+
     if [ PATH_TO_CONFIG_XML != "" ];
         then
             yes | cp -f ${PATH_TO_CONFIG_XML} ${BASE_DIR}/live
@@ -216,6 +233,13 @@ createDirectoryStructure
 
 createCerts
 
+createCorradeUserIfNotExist
+
+setupMonoCertificatePorts
+
+# BUG workaround for https://github.com/mono/mono/issues/14152
+installMono2ndTimeForBugWorkAround
+
 installCorrade
 
 setPerms
@@ -223,5 +247,6 @@ setPerms
 printInfoToCMD
 
 # disable kernel protection to increase mono performance.
+# might not really be needed.
 
-grubby --update-kernel=ALL --args="nopti noibrs noibpb nospectre_v2 nospec_store_bypass_disable"
+# grubby --update-kernel=ALL --args="nopti noibrs noibpb nospectre_v2 nospec_store_bypass_disable"
