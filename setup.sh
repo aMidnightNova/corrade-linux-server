@@ -157,8 +157,8 @@ installCorrade(){
         then
             yes | cp -f ${PATH_TO_CONFIG_XML} ${BASE_DIR}/live
             #remove password and protocol fields
-            xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Password" ${BASE_DIR}/live/Configuration.xml
-            xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Protocol" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Password" ${BASE_DIR}/live/Configuration.xml ""
+            #xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Protocol" ${BASE_DIR}/live/Configuration.xml
 
             xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
