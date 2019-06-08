@@ -9,16 +9,16 @@ This will launch corrade with the TCP and HTTP server configured and both placed
 this is specifiably tailored to work with [node-corrade](https://github.com/MidnightRift/node-corrade)
 
 Public ports are exposed, internal ports are behind a firewall.
-###TCP
+### TCP
 Internal: 4095
 External: 9000
 
-###HTTPS
+### HTTPS
 Internal: 8008
 External: 443 (default)
 
 
-##Install
+## Install
 
 there are 3 arguments to the install script.
 
