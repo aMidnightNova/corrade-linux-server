@@ -138,6 +138,7 @@ function getHelp() {
     echo " --status    : Shows Corrade status."
     echo " --restore   : Restore previous installed version of Corrade."
     echo " --update    : Update Corrade."
+    echo " --help      : Lists info about commands."
 }
 
 function doCron() {

@@ -13,7 +13,16 @@ if [ "$1" != "" ];
         exit
 fi
 
-PATH_TO_CONFIG_XML="$2"
+
+if [ "$2" != "" ];
+    then
+        PATH_TO_CONFIG_XML="$2"
+    else
+        echo "Please include the required argument PATH_TO_CONFIG_XML"
+        exit
+fi
+
+
 
 if [ "$3" != "" ];
     then
@@ -159,6 +168,7 @@ installCorrade(){
 
             xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Password" -v "" ${BASE_DIR}/live/Configuration.xml
             xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Protocol" -v "Tls12" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -d "Configuration/Servers/TCPServer/Port" -v "4095" ${BASE_DIR}/live/Configuration.xml
 
             xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
