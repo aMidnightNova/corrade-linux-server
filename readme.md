@@ -11,10 +11,12 @@ this is specifiably tailored to work with [node-corrade](https://github.com/Midn
 Public ports are exposed, internal ports are behind a firewall.
 ### TCP
 Internal: 4095
+
 External: 9000
 
 ### HTTPS
 Internal: 8008
+
 External: 443 (default)
 
 
