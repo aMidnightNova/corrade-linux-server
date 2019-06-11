@@ -142,7 +142,7 @@ function getHelp() {
 }
 
 function doCron() {
-    cerbot renew
+    certbot renew
 }
 
 
