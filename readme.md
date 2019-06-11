@@ -4,7 +4,7 @@ Run as root
 
 ## Info
 
-This project is specifiably tailored to work with [node-corrade](https://github.com/MidnightRift/node-corrade) but should work with anything really as long as you use the external ports.
+This project is specifically tailored to work with [node-corrade](https://github.com/MidnightRift/node-corrade) but should work with anything really as long as you use the external ports.
 
 
 This will launch Corrade with the TCP and HTTP server configured and both placed behind nginx and the public facing ports secured with a certificate from Let's Encrypt.
