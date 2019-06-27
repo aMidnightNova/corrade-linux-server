@@ -108,6 +108,9 @@ function trimBackups() {
     ls -tr | head -n -10 | xargs -l -r sh -c 'echo Deleting $1 ON `date` && rm $1' --
     cd -
 }
+function getVersionNumber {
+    exiftool ${BASE_DIR}/live/Corrade.exe | grep -w "Product Version Number" | cut -d":" -f2 | awk '{$1=$1};1'
+}
 
 
 function doRestore() {
@@ -166,6 +169,9 @@ case $1 in
         ;;
     --status)
         getStatus
+        ;;
+    --version)
+        getVersionNumber
         ;;
     --update)
         doUpdate
