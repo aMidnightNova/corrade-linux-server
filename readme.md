@@ -44,6 +44,7 @@ FILE_PATH_OR_URL_TO_CORRADE_ZIP FILE_PATH_TO_XML_CONF (optional)CERT_BOT_EMAIL
 - corrade --stop    : Stop Corrade.
 - corrade --restart : Restarts Corrade.
 - corrade --status  : Shows Corrade status.
+- corrade --status  : Shows the current version of Corrade.
 - corrade --update  : Update Corrade.
 - corrade --save    : Creates a backup of the live codebase.
 - corrade --restore : Restore previous installed version of Corrade.
