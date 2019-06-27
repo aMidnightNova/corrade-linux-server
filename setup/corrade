@@ -139,6 +139,7 @@ function getHelp() {
     echo " --start     : Starts Corrade."
     echo " --restart   : Restarts Corrade."
     echo " --status    : Shows Corrade status."
+    echo " --status    : Shows the current version of corrade."
     echo " --restore   : Restore previous installed version of Corrade."
     echo " --update    : Update Corrade."
     echo " --help      : Lists info about commands."
