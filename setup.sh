@@ -217,7 +217,7 @@ function printInfoToCMD() {
 
 yum update -y
 yum install -y epel-release
-yum install -y --enablerepo=epel git openssl openssl-devel nginx firewalld unzip certbot xmlstarlet httpd-tools bsdtar
+yum install -y --enablerepo=epel git openssl openssl-devel nginx firewalld unzip certbot xmlstarlet httpd-tools bsdtar perl-Image-ExifTool
 
 
 
