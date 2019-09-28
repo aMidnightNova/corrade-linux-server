@@ -56,12 +56,10 @@ while [[ ! ${ANS} =~ ^([yY][eE][sS]|[yY])$ ]]
 ####
 
 function installMono() {
-# there is a bug with the security certificate installs with 5.20.1 Stable (5.20.1.19) https://github.com/mono/mono/issues/14152
-# so lets use the platform default for now
-#    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
-#    su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
-#   yum install -y mono-complete
-    yum install -y mono-core
+    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+    su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
+    yum install -y mono-complete
+
 }
 
 function setupFirewalld() {
@@ -168,7 +166,7 @@ installCorrade(){
 
             xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Password" -v "" ${BASE_DIR}/live/Configuration.xml
             xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Protocol" -v "Tls12" ${BASE_DIR}/live/Configuration.xml
-            xmlstarlet ed -L -d "Configuration/Servers/TCPServer/Port" -v "4095" ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -d "Configuration/Servers/TCPServer/Port" -v "8085" ${BASE_DIR}/live/Configuration.xml
 
             xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
