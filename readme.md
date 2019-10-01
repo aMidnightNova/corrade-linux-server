@@ -7,19 +7,19 @@ Run as root
 This project is specifically tailored to work with [node-corrade](https://github.com/MidnightRift/node-corrade) but should work with anything really as long as you use the external ports.
 
 
-This will launch Corrade with the TCP and HTTP server configured and both placed behind nginx and the public facing ports secured with a certificate from Let's Encrypt.
+This will launch [Corrade](http://grimore.org/secondlife/scripted_agents/corrade) with the TCP and HTTP server configured and both placed behind nginx and the public facing ports secured with a certificate from Let's Encrypt.
 
 
 Public ports are exposed, internal ports are behind a firewall.
 ### TCP
-Internal: 4095
+Internal: 8085
 
 External: 9000
 
 ### HTTPS
 Internal: 8008
 
-External: 443 (default)
+External: 443 (default https)
 
 
 ## Install
