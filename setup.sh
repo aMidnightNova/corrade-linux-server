@@ -109,23 +109,23 @@ function createDirectoryStructure() {
     mkdir -p ${BASE_DIR}/logs
     mkdir -p ${BASE_DIR}/backups
     mkdir -p ${BASE_DIR}/temp
-    mkdir -p ${BASE_DIR}/cert
+    mkdir -p ${BASE_DIR}/certs
 }
 
 function createCerts() {
-    openssl genrsa -out ${BASE_DIR}/cert/corrade_private_key.pem 2048
-    openssl req -new -key ${BASE_DIR}/cert/corrade_private_key.pem -subj "/CN=$HOSTNAME" -out ${BASE_DIR}/cert/corrade_csr.csr
-    openssl x509 -signkey ${BASE_DIR}/cert/corrade_private_key.pem -in ${BASE_DIR}/cert/corrade_csr.csr -req -days 3650 -out ${BASE_DIR}/cert/corrade_cert.pem
-    openssl pkcs12 -export -passout pass: -in ${BASE_DIR}/cert/corrade_cert.pem -inkey ${BASE_DIR}/cert/corrade_private_key.pem -out ${BASE_DIR}/cert/corrade_pfx_cert.pfx
-    openssl rsa -in ${BASE_DIR}/cert/corrade_private_key.pem -outform PVK -pvk-none -out ${BASE_DIR}/cert/corrade_pvk_cert.pvk
+    openssl genrsa -out ${BASE_DIR}/certs/corrade_private_key.pem 2048
+    openssl req -new -key ${BASE_DIR}/certs/corrade_private_key.pem -subj "/CN=$HOSTNAME" -out ${BASE_DIR}/certs/corrade_csr.csr
+    openssl x509 -signkey ${BASE_DIR}/certs/corrade_private_key.pem -in ${BASE_DIR}/certs/corrade_csr.csr -req -days 3650 -out ${BASE_DIR}/certs/corrade_cert.pem
+    openssl pkcs12 -export -passout pass: -in ${BASE_DIR}/certs/corrade_cert.pem -inkey ${BASE_DIR}/certs/corrade_private_key.pem -out ${BASE_DIR}/certs/corrade_pfx_cert.pfx
+    openssl rsa -in ${BASE_DIR}/certs/corrade_private_key.pem -outform PVK -pvk-none -out ${BASE_DIR}/certs/corrade_pvk_cert.pvk
 }
 
 function setupMonoCertificatePorts() {
     #tell mono to use a cert on ports:
-    su -c "httpcfg -add -port 8008 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
-    su -c "httpcfg -add -port 8009 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+    su -c "httpcfg -add -port 8008 -pvk ${BASE_DIR}/certs/corrade_pvk_cert.pvk -cert ${BASE_DIR}/certs/corrade_cert.pem" corrade
+    su -c "httpcfg -add -port 8009 -pvk ${BASE_DIR}/certs/corrade_pvk_cert.pvk -cert ${BASE_DIR}/certs/corrade_cert.pem" corrade
     #JIC its needed later
-    su -c "httpcfg -add -port 8443 -pvk ${BASE_DIR}/cert/corrade_pvk_cert.pvk -cert ${BASE_DIR}/cert/corrade_cert.pem" corrade
+    su -c "httpcfg -add -port 8443 -pvk ${BASE_DIR}/certs/corrade_pvk_cert.pvk -cert ${BASE_DIR}/certs/corrade_cert.pem" corrade
 }
 
 function createCorradeUserIfNotExist() {
@@ -168,9 +168,9 @@ installCorrade(){
             xmlstarlet ed -L -d "Configuration/Servers/TCPServer/TCPCertificate/Protocol" -v "Tls12" ${BASE_DIR}/live/Configuration.xml
             xmlstarlet ed -L -d "Configuration/Servers/TCPServer/Port" -v "8085" ${BASE_DIR}/live/Configuration.xml
 
-            xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/TCPServer/TCPCertificate/Path" -v ${BASE_DIR}/certs/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
-            xmlstarlet ed -L -u "Configuration/Servers/MQTTServer/MQTTCertificate/Path" -v ${BASE_DIR}/cert/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
+            xmlstarlet ed -L -u "Configuration/Servers/MQTTServer/MQTTCertificate/Path" -v ${BASE_DIR}/certs/corrade_pfx_cert.pfx ${BASE_DIR}/live/Configuration.xml
 
             xmlstarlet ed -L -u "Configuration/Servers/HTTPServer/Prefixes/Prefix" -v "https://+:8008/" ${BASE_DIR}/live/Configuration.xml
             #xmlstarlet ed -L -u "Configuration/Servers/Nucleus/Prefixes/Prefix" -v "https://+:8009/" ${BASE_DIR}/live/Configuration.xml
